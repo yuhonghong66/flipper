@@ -51,7 +51,13 @@ class JEventBase : public jni::HybridClass<JEventBase> {
   JEventBase() {}
 
   void loopForever() {
-    folly::EventBaseManager::get()->setEventBase(&eventBase_, false);
+    auto m = folly::EventBaseManager::get();
+    tl_.reset(&eventBase_);
+    m->setEventBase(&eventBase_, false);
+    auto e = tl_.get();
+    auto eb = m->getExistingEventBase();
+    DCHECK(e);
+    DCHECK(eb);
     eventBase_.loopForever();
   }
 
@@ -60,6 +66,7 @@ class JEventBase : public jni::HybridClass<JEventBase> {
   }
 
   folly::EventBase eventBase_;
+  mutable folly::ThreadLocalPtr<folly::EventBase> tl_;
 };
 
 class JSonarObject : public jni::JavaClass<JSonarObject> {
